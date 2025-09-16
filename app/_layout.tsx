@@ -79,7 +79,7 @@ export default function RootLayout() {
     // If no user, redirect to login
     if (!user && !inAuthGroup) {
       console.log('No user found, redirecting to login');
-      router.replace('/(auth)/login');
+      router.replace('/landing');
       return;
     }
     
@@ -146,6 +146,7 @@ export default function RootLayout() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="landing" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(driver)" />
