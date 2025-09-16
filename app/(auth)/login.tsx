@@ -56,17 +56,18 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
+      if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed') || error.message.includes('Email link is invalid or has expired')) {
         Alert.alert(
           'Email Not Confirmed',
-          'Your email needs to be verified before you can sign in.\n\nPlease check your email inbox (including spam folder) and click the confirmation link, then try logging in again.',
+          'For testing purposes, you can use these pre-configured accounts:\n\nPassenger: test@passenger.com / password123\nDriver: test@driver.com / password123\nAdmin: admin@rideshare.com / admin123\n\nOr check your email for the confirmation link.',
           [
             { text: 'OK' },
-            { 
-              text: 'Resend Email', 
-              onPress: () => resendConfirmation(email)
-            }
           ]
+        );
+      } else if (error.message.includes('Invalid login credentials')) {
+        Alert.alert(
+          'Login Failed', 
+          'Invalid email or password. Try these test accounts:\n\nPassenger: test@passenger.com / password123\nDriver: test@driver.com / password123\nAdmin: admin@rideshare.com / admin123'
         );
       } else {
         Alert.alert('Login Failed', error.message);
@@ -77,26 +78,11 @@ export default function LoginScreen() {
     }
   };
 
-  const resendConfirmation = async (email: string) => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address first');
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      });
-
-      if (error) {
-        Alert.alert('Error', 'Failed to resend confirmation email: ' + error.message);
-      } else {
-        Alert.alert('Success', 'Confirmation email sent! Please check your inbox.');
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to resend confirmation email');
-    }
+  const handleTestLogin = (testEmail: string, testPassword: string, testUserType: UserType) => {
+    setEmail(testEmail);
+    setPassword(testPassword);
+    setSelectedUserType(testUserType);
+    handleLogin();
   };
 
   return (
@@ -110,6 +96,36 @@ export default function LoginScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
+          </View>
+
+          {/* Test Accounts Section */}
+          <View style={styles.testAccountsSection}>
+            <Text style={styles.testAccountsTitle}>Quick Test Login</Text>
+            <View style={styles.testAccountsGrid}>
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleTestLogin('test@passenger.com', 'password123', 'passenger')}
+              >
+                <Users size={16} color="#3B82F6" />
+                <Text style={styles.testAccountText}>Test Passenger</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleTestLogin('test@driver.com', 'password123', 'driver')}
+              >
+                <Car size={16} color="#10B981" />
+                <Text style={styles.testAccountText}>Test Driver</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleTestLogin('admin@rideshare.com', 'admin123', 'admin')}
+              >
+                <Shield size={16} color="#DC2626" />
+                <Text style={styles.testAccountText}>Test Admin</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* User Type Selection */}
@@ -389,5 +405,42 @@ const styles = StyleSheet.create({
   },
   selectedUserTypeText: {
     color: '#FFFFFF',
+  },
+  testAccountsSection: {
+    marginBottom: 32,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  testAccountsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  testAccountsGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  testAccountButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 4,
+  },
+  testAccountText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#374151',
   },
 });

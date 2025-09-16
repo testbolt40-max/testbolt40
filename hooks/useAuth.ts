@@ -106,8 +106,8 @@ export function useAuth() {
         data: {
           full_name: fullName,
           user_type: userType,
-          email_confirm: false,
         },
+        emailRedirectTo: undefined,
       },
     });
 
