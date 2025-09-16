@@ -56,11 +56,17 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      if (error.message.includes('Email not confirmed')) {
+      if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
         Alert.alert(
           'Email Not Confirmed',
-          'Please check your email and click the confirmation link before signing in.',
-          [{ text: 'OK' }]
+          'Your email needs to be verified before you can sign in.\n\nPlease check your email inbox (including spam folder) and click the confirmation link, then try logging in again.',
+          [
+            { text: 'OK' },
+            { 
+              text: 'Resend Email', 
+              onPress: () => resendConfirmation(email)
+            }
+          ]
         );
       } else {
         Alert.alert('Login Failed', error.message);
@@ -68,6 +74,28 @@ export default function LoginScreen() {
     } else {
       // Don't manually redirect here - let the _layout.tsx handle routing based on user type
       console.log('Login successful, letting _layout handle routing');
+    }
+  };
+
+  const resendConfirmation = async (email: string) => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address first');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) {
+        Alert.alert('Error', 'Failed to resend confirmation email: ' + error.message);
+      } else {
+        Alert.alert('Success', 'Confirmation email sent! Please check your inbox.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to resend confirmation email');
     }
   };
 

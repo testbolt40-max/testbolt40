@@ -52,7 +52,7 @@ export default function SignupScreen() {
     } else {
       Alert.alert(
         'Success',
-        'Account created successfully! Please check your email and click the confirmation link to verify your account before signing in.',
+        'Account created successfully!\n\nIMPORTANT: Please check your email inbox (including spam folder) and click the confirmation link to verify your account before you can sign in.',
         [{ text: 'OK', onPress: () => router.push('/(auth)/login') }]
       );
     }
