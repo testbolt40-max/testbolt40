@@ -26,7 +26,6 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [selectedUserType, setSelectedUserType] = useState<UserType>('passenger');
   const [loading, setLoading] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const { signUp } = useAuth();
@@ -56,7 +55,7 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName, selectedUserType);
+    const { error } = await signUp(email, password, fullName, 'passenger');
     setLoading(false);
 
     if (error) {
@@ -125,34 +124,6 @@ export default function SignupScreen() {
             {/* Signup Form */}
             <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
               <View style={styles.formCard}>
-                {/* User Type Selection */}
-                <View style={styles.userTypeSection}>
-                  <Text style={styles.userTypeTitle}>I want to be a:</Text>
-                  <View style={styles.userTypeGrid}>
-                    {(['passenger', 'driver', 'admin'] as UserType[]).map((type) => (
-                      <TouchableOpacity
-                        key={type}
-                        style={[
-                          styles.userTypeCard,
-                          { 
-                            backgroundColor: selectedUserType === type ? 'rgba(255,255,255,0.15)' : getUserTypeColor(type),
-                            borderColor: selectedUserType === type ? 'rgba(255,255,255,0.3)' : getUserTypeBorderColor(type),
-                          }
-                        ]}
-                        onPress={() => setSelectedUserType(type)}
-                      >
-                        {getUserTypeIcon(type)}
-                        <Text style={[
-                          styles.userTypeText,
-                          selectedUserType === type && styles.selectedUserTypeText
-                        ]}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
                 {/* Full Name Input */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name</Text>
@@ -339,41 +310,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-  },
-
-  // User Type Selection
-  userTypeSection: {
-    marginBottom: 24,
-  },
-  userTypeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  userTypeGrid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  userTypeCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 6,
-  },
-  userTypeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  selectedUserTypeText: {
-    color: '#FFFFFF',
   },
 
   // Input Groups

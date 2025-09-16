@@ -24,7 +24,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedUserType, setSelectedUserType] = useState<UserType>('passenger');
   const [loading, setLoading] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const { signIn } = useAuth();
@@ -67,7 +66,7 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const { error } = await signIn(email, password, selectedUserType);
+    const { error } = await signIn(email, password);
     setLoading(false);
 
     if (error) {
@@ -147,44 +146,6 @@ export default function LoginScreen() {
             {/* Login Form */}
             <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
               <View style={styles.formCard}>
-                {/* User Type Selection */}
-                <View style={styles.userTypeSection}>
-                  <Text style={styles.userTypeTitle}>I am a:</Text>
-                  <View style={styles.userTypeGrid}>
-                    <TouchableOpacity
-                      style={[
-                        styles.userTypeCard,
-                        selectedUserType === 'passenger' && styles.selectedUserType
-                      ]}
-                      onPress={() => setSelectedUserType('passenger')}
-                    >
-                      <Users size={18} color={selectedUserType === 'passenger' ? '#FFFFFF' : '#3B82F6'} />
-                      <Text style={[
-                        styles.userTypeText,
-                        selectedUserType === 'passenger' && styles.selectedUserTypeText
-                      ]}>
-                        Passenger
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[
-                        styles.userTypeCard,
-                        selectedUserType === 'driver' && styles.selectedUserType
-                      ]}
-                      onPress={() => setSelectedUserType('driver')}
-                    >
-                      <Car size={18} color={selectedUserType === 'driver' ? '#FFFFFF' : '#10B981'} />
-                      <Text style={[
-                        styles.userTypeText,
-                        selectedUserType === 'driver' && styles.selectedUserTypeText
-                      ]}>
-                        Driver
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
                 {/* Email Input */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Email</Text>
@@ -398,47 +359,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-  },
-
-  // User Type Selection
-  userTypeSection: {
-    marginBottom: 24,
-  },
-  userTypeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  userTypeGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  userTypeCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    gap: 8,
-  },
-  selectedUserType: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  userTypeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  selectedUserTypeText: {
-    color: '#FFFFFF',
   },
 
   // Input Groups
