@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Navigation, Search, Car, Users, Crown, Clock, Star, Phone, MessageCircle, X, Zap, Shield, Bell, Sparkles, Calendar, Chrome as Home, Truck } from 'lucide-react-native';
+import { MapPin, Navigation, Search, Car, Users, Crown, Clock, Star, Phone, MessageCircle, X, Zap, Shield, Bell, Sparkles, Calendar, Chrome as Home, Truck, Share2, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/lib/designSystem';
@@ -178,6 +178,8 @@ export default function HomeScreen() {
   const [showScheduleRide, setShowScheduleRide] = useState(false);
   const [completedRide, setCompletedRide] = useState<any>(null);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(3);
+  const [showBookingDetails, setShowBookingDetails] = useState(false);
+  const [bookedRide, setBookedRide] = useState<any>(null);
   const { user } = useAuth();
   const {
     activeRide,
@@ -284,8 +286,9 @@ export default function HomeScreen() {
         address: destination
       };
 
-      await requestRide({ pickup, destination: dest, rideType: selectedRide.id as any, passengers: selectedCar.capacity });
-      setShowActiveRide(true);
+      const newRide = await requestRide({ pickup, destination: dest, rideType: selectedRide.id as any, passengers: selectedCar.capacity });
+      setBookedRide(newRide);
+      setShowBookingDetails(true);
       setDestination('');
       setDestinationCoords(null);
       setSelectedRide(null);
@@ -867,6 +870,222 @@ export default function HomeScreen() {
         onClose={() => setShowScheduleRide(false)}
         onSchedule={handleScheduleRide}
       />
+
+      {/* Booking Details Modal */}
+      <Modal
+        visible={showBookingDetails}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowBookingDetails(false)}
+            >
+              <X size={24} color="#374151" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Booking Confirmed</Text>
+            <TouchableOpacity
+              style={styles.trackButton}
+              onPress={() => {
+                setShowBookingDetails(false);
+                setShowActiveRide(true);
+              }}
+            >
+              <Text style={styles.trackButtonText}>Track</Text>
+            </TouchableOpacity>
+          </View>
+
+          {bookedRide && (
+            <ScrollView style={styles.bookingDetailsContent} showsVerticalScrollIndicator={false}>
+              {/* Success Message */}
+              <View style={styles.successSection}>
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  style={styles.successGradient}
+                >
+                  <View style={styles.successIcon}>
+                    <Car size={32} color="#FFFFFF" />
+                  </View>
+                  <Text style={styles.successTitle}>Ride Booked Successfully!</Text>
+                  <Text style={styles.successSubtitle}>Your driver is on the way</Text>
+                </LinearGradient>
+              </View>
+
+              {/* Trip Details */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsSectionTitle}>Trip Details</Text>
+                
+                <View style={styles.detailsCard}>
+                  <View style={styles.routeDetails}>
+                    <View style={styles.routeItem}>
+                      <View style={[styles.routeDot, { backgroundColor: Colors.mapPickup }]} />
+                      <View style={styles.routeContent}>
+                        <Text style={styles.routeLabel}>Pickup</Text>
+                        <Text style={styles.routeAddress}>{bookedRide.pickup_location}</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.routeConnector} />
+                    
+                    <View style={styles.routeItem}>
+                      <View style={[styles.routeDot, { backgroundColor: Colors.mapDropoff }]} />
+                      <View style={styles.routeContent}>
+                        <Text style={styles.routeLabel}>Destination</Text>
+                        <Text style={styles.routeAddress}>{bookedRide.dropoff_location}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Ride Information */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsSectionTitle}>Ride Information</Text>
+                
+                <View style={styles.detailsCard}>
+                  <View style={styles.infoGrid}>
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <Car size={16} color={Colors.primary} />
+                      </View>
+                      <Text style={styles.infoLabel}>Vehicle Type</Text>
+                      <Text style={styles.infoValue}>{selectedCar?.name || 'Standard'}</Text>
+                    </View>
+                    
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <Users size={16} color={Colors.secondary} />
+                      </View>
+                      <Text style={styles.infoLabel}>Passengers</Text>
+                      <Text style={styles.infoValue}>{selectedCar?.capacity || 1}</Text>
+                    </View>
+                    
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <MapPin size={16} color={Colors.warning} />
+                      </View>
+                      <Text style={styles.infoLabel}>Distance</Text>
+                      <Text style={styles.infoValue}>{(bookedRide.distance || 0).toFixed(1)} km</Text>
+                    </View>
+                    
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <Clock size={16} color={Colors.info} />
+                      </View>
+                      <Text style={styles.infoLabel}>Duration</Text>
+                      <Text style={styles.infoValue}>{bookedRide.duration || 0} min</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Fare Breakdown */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsSectionTitle}>Fare Breakdown</Text>
+                
+                <View style={styles.detailsCard}>
+                  <View style={styles.fareBreakdown}>
+                    <View style={styles.fareRow}>
+                      <Text style={styles.fareLabel}>Base Fare</Text>
+                      <Text style={styles.fareValue}>$3.50</Text>
+                    </View>
+                    <View style={styles.fareRow}>
+                      <Text style={styles.fareLabel}>Distance ({(bookedRide.distance || 0).toFixed(1)} km)</Text>
+                      <Text style={styles.fareValue}>${((bookedRide.distance || 0) * 1.2).toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.fareRow}>
+                      <Text style={styles.fareLabel}>Time ({bookedRide.duration || 0} min)</Text>
+                      <Text style={styles.fareValue}>${((bookedRide.duration || 0) * 0.25).toFixed(2)}</Text>
+                    </View>
+                    <View style={[styles.fareRow, styles.totalFareRow]}>
+                      <Text style={styles.totalFareLabel}>Total Fare</Text>
+                      <Text style={styles.totalFareValue}>${(bookedRide.fare || 0).toFixed(2)}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Driver Information */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsSectionTitle}>Driver Information</Text>
+                
+                <View style={styles.detailsCard}>
+                  <View style={styles.driverInfo}>
+                    <View style={styles.driverAvatar}>
+                      <User size={24} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.driverDetails}>
+                      <Text style={styles.driverName}>John Smith</Text>
+                      <Text style={styles.driverVehicle}>Toyota Camry • Silver</Text>
+                      <Text style={styles.driverPlate}>License: ABC 123</Text>
+                      <View style={styles.driverRating}>
+                        <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                        <Text style={styles.driverRatingText}>4.8 rating</Text>
+                      </View>
+                    </View>
+                    <View style={styles.driverActions}>
+                      <TouchableOpacity style={styles.driverActionButton}>
+                        <Phone size={18} color={Colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.driverActionButton}>
+                        <MessageCircle size={18} color={Colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* ETA Information */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsSectionTitle}>Estimated Arrival</Text>
+                
+                <View style={styles.detailsCard}>
+                  <View style={styles.etaInfo}>
+                    <View style={styles.etaIcon}>
+                      <Clock size={24} color={Colors.primary} />
+                    </View>
+                    <View style={styles.etaContent}>
+                      <Text style={styles.etaTime}>{bookedRide.eta || '5 min'}</Text>
+                      <Text style={styles.etaLabel}>Driver arriving in</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.bookingActions}>
+                <TouchableOpacity 
+                  style={styles.trackRideButton}
+                  onPress={() => {
+                    setShowBookingDetails(false);
+                    setShowActiveRide(true);
+                  }}
+                >
+                  <LinearGradient
+                    colors={Colors.primaryGradient as any}
+                    style={styles.trackRideGradient}
+                  >
+                    <Navigation size={18} color={Colors.textInverse} />
+                    <Text style={styles.trackRideButtonText}>Track Your Ride</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.shareRideButton}
+                  onPress={() => {
+                    Alert.alert('Share Trip', 'Trip details shared with emergency contacts.');
+                  }}
+                >
+                  <Share2 size={18} color={Colors.textPrimary} />
+                  <Text style={styles.shareRideButtonText}>Share Trip</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
     </>
   );
 }
@@ -1437,6 +1656,280 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   completeButtonText: {
+    color: Colors.textInverse,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: '600',
+  },
+  bookingDetailsContent: {
+    flex: 1,
+  },
+  successSection: {
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing['2xl'],
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...Shadows.lg,
+  },
+  successGradient: {
+    padding: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  successIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  successTitle: {
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: '700',
+    color: Colors.textInverse,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  successSubtitle: {
+    fontSize: Typography.fontSize.base,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+  },
+  detailsSection: {
+    marginBottom: Spacing['2xl'],
+  },
+  detailsSectionTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+  },
+  detailsCard: {
+    backgroundColor: Colors.surface,
+    marginHorizontal: Spacing['2xl'],
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    ...Shadows.sm,
+  },
+  routeDetails: {
+    gap: Spacing.md,
+  },
+  routeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  routeDot: {
+    width: 12,
+    height: 12,
+    borderRadius: BorderRadius.full,
+    marginRight: Spacing.md,
+  },
+  routeContent: {
+    flex: 1,
+  },
+  routeLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  routeAddress: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  routeConnector: {
+    width: 2,
+    height: Spacing.lg,
+    backgroundColor: Colors.border,
+    marginLeft: 5,
+    marginVertical: Spacing.xs,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.lg,
+  },
+  infoItem: {
+    flex: 1,
+    minWidth: '45%',
+    alignItems: 'center',
+  },
+  infoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  infoLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  fareBreakdown: {
+    gap: Spacing.md,
+  },
+  fareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  fareLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+  },
+  fareValue: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  totalFareRow: {
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    marginTop: Spacing.sm,
+  },
+  totalFareLabel: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  totalFareValue: {
+    fontSize: Typography.fontSize.lg,
+    color: Colors.success,
+    fontWeight: '700',
+  },
+  driverInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.lg,
+  },
+  driverDetails: {
+    flex: 1,
+  },
+  driverName: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  driverVehicle: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  driverPlate: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  driverRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  driverRatingText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+  },
+  driverActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  driverActionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  etaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  etaIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    backgroundColor: `${Colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.lg,
+  },
+  etaContent: {
+    flex: 1,
+  },
+  etaTime: {
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  etaLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+  },
+  bookingActions: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  trackRideButton: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Shadows.md,
+  },
+  trackRideGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  trackRideButtonText: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: '600',
+    color: Colors.textInverse,
+  },
+  shareRideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceElevated,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    ...Shadows.sm,
+  },
+  shareRideButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  trackButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.sm,
+  },
+  trackButtonText: {
     color: Colors.textInverse,
     fontSize: Typography.fontSize.sm,
     fontWeight: '600',
