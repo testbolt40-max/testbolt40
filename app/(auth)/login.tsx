@@ -72,13 +72,13 @@ export default function LoginScreen() {
       if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed') || error.message.includes('Email link is invalid or has expired')) {
         Alert.alert(
           'Email Not Confirmed',
-          'For testing purposes, you can use these pre-configured accounts:\n\nPassenger: test@passenger.com / password123\nDriver: test@driver.com / password123\nAdmin: admin@rideshare.com / admin123\n\nOr check your email for the confirmation link.',
+          'For testing purposes, you can use these pre-configured accounts:\n\nPassenger: test@passenger.com / password123\nDriver: driver@test.com / password123\nAdmin: admin@rideshare.com / admin123\n\nOr check your email for the confirmation link.',
           [{ text: 'OK' }]
         );
       } else if (error.message.includes('Invalid login credentials')) {
         Alert.alert(
           'Login Failed', 
-          'Invalid email or password. Try these test accounts:\n\nPassenger: test@passenger.com / password123\nDriver: test@driver.com / password123\nAdmin: admin@rideshare.com / admin123'
+          'Invalid email or password. Try these test accounts:\n\nPassenger: test@passenger.com / password123\nDriver: driver@test.com / password123\nAdmin: admin@rideshare.com / admin123'
         );
       } else {
         Alert.alert('Login Failed', error.message);
