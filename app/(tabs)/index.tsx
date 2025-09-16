@@ -213,7 +213,6 @@ export default function HomeScreen() {
             .select('*')
             .eq('passenger_id', user.id)
             .eq('status', 'completed')
-            .is('rating', null) // Rides that haven't been rated yet
             .limit(10);
           
           setUnreadNotificationsCount(recentRides?.length || 0);
