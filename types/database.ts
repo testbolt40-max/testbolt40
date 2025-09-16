@@ -93,7 +93,7 @@ export interface Database {
           driver_id: string | null;
           pickup_location: string;
           dropoff_location: string;
-          status: 'active' | 'completed' | 'cancelled';
+          status: 'requested' | 'driver_assigned' | 'driver_arriving' | 'driver_arrived' | 'in_progress' | 'completed' | 'cancelled';
           fare: number;
           distance: number;
           duration: number;
@@ -107,7 +107,7 @@ export interface Database {
           driver_id?: string | null;
           pickup_location: string;
           dropoff_location: string;
-          status?: 'active' | 'completed' | 'cancelled';
+          status?: 'requested' | 'driver_assigned' | 'driver_arriving' | 'driver_arrived' | 'in_progress' | 'completed' | 'cancelled';
           fare?: number;
           distance?: number;
           duration?: number;
@@ -121,7 +121,7 @@ export interface Database {
           driver_id?: string | null;
           pickup_location?: string;
           dropoff_location?: string;
-          status?: 'active' | 'completed' | 'cancelled';
+          status?: 'requested' | 'driver_assigned' | 'driver_arriving' | 'driver_arrived' | 'in_progress' | 'completed' | 'cancelled';
           fare?: number;
           distance?: number;
           duration?: number;

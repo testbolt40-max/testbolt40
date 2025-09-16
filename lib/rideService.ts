@@ -149,7 +149,7 @@ export class RideService {
       passenger_id: passengerId, // Use the actual passenger ID
       pickup_location: request.pickup.address,
       dropoff_location: request.destination.address,
-      status: 'active',
+      status: 'requested',
       fare: fare,
       distance: distance,
       duration: duration,
@@ -190,13 +190,13 @@ export class RideService {
       await ridesTable()
         .update({ 
           driver_id: assignedDriver.id,
-          status: 'active'
+          status: 'driver_assigned'
         })
         .eq('id', rideId);
 
       // Update driver status
       await driversTable()
-        .update({ status: 'active' })
+        .update({ status: 'busy' })
         .eq('id', assignedDriver.id);
     }
   }
