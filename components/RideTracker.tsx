@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
 import { MapPin, Clock, Car, Phone, MessageCircle, Star, Navigation, Shield, X, Share2, User, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/lib/designSystem';
@@ -16,29 +16,65 @@ interface RideTrackerProps {
 }
 
 export default function RideTracker({ ride, onCancel, onContact, onEmergency }: RideTrackerProps) {
-  const eta = ride.eta || 'Calculating...';
+  const [eta, setEta] = useState(ride.eta || '5 min');
   const [progress] = useState(new Animated.Value(0));
-  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
-  const [driverLocation, setDriverLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number}>({
+    latitude: 37.7749,
+    longitude: -122.4194
+  });
+  const [driverLocation, setDriverLocation] = useState<{latitude: number, longitude: number}>({
+    latitude: 37.7849,
+    longitude: -122.4094
+  });
+  const [destination] = useState<{latitude: number, longitude: number}>({
+    latitude: 37.7949,
+    longitude: -122.3994
+  });
   
   useEffect(() => {
-    // Animate progress bar for active rides
-    if (ride.status === 'active') {
+    // Animate progress bar for in-progress rides
+    if (ride.status === 'in_progress') {
       Animated.timing(progress, {
-        toValue: 35, // Mock progress percentage
+        toValue: 65, // Mock progress percentage
         duration: 1500,
         useNativeDriver: false
       }).start();
       
       // Simulate real-time location updates
       const locationInterval = setInterval(() => {
-        // Mock driver location updates
+        // Mock driver location updates - moving towards destination
         setDriverLocation({
-          latitude: 37.7749 + (Math.random() - 0.5) * 0.01,
-          longitude: -122.4194 + (Math.random() - 0.5) * 0.01
+          latitude: prev.latitude + (destination.latitude - prev.latitude) * 0.02,
+          longitude: prev.longitude + (destination.longitude - prev.longitude) * 0.02
         });
         
-        // Mock current location (pickup to destination)
+        // Update ETA as driver gets closer
+        setEta(prev => {
+          const currentEta = parseInt(prev.split(' ')[0]);
+          return currentEta > 1 ? `${currentEta - 1} min` : 'Arriving now';
+        });
+      }, 3000);
+      
+      return () => clearInterval(locationInterval);
+    } else if (ride.status === 'driver_arriving') {
+      // Driver is coming to pickup
+      const arrivalInterval = setInterval(() => {
+        // Mock driver approaching pickup location
+        setDriverLocation(prev => ({
+          latitude: prev.latitude + (currentLocation.latitude - prev.latitude) * 0.05,
+          longitude: prev.longitude + (currentLocation.longitude - prev.longitude) * 0.05
+        }));
+        
+        setEta(prev => {
+          const currentEta = parseInt(prev.split(' ')[0]);
+          return currentEta > 1 ? `${currentEta - 1} min` : 'Driver arrived';
+        });
+      }, 2000);
+      
+      return () => clearInterval(arrivalInterval);
+    } else {
+      // For other statuses, simulate driver movement
+      const locationInterval = setInterval(() => {
         setCurrentLocation({
           latitude: 37.7749 + (Math.random() - 0.5) * 0.005,
           longitude: -122.4194 + (Math.random() - 0.5) * 0.005
@@ -47,24 +83,38 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
       
       return () => clearInterval(locationInterval);
     }
-  }, [ride.status]);
+  }, [ride.status, currentLocation, destination]);
 
   const getStatusMessage = () => {
     switch (ride.status) {
-      case 'active':
+      case 'requested':
+        return 'Looking for a driver...';
+      case 'driver_assigned':
+        return 'Driver assigned';
+      case 'driver_arriving':
+        return 'Driver is on the way';
+      case 'driver_arrived':
+        return 'Driver has arrived';
+      case 'in_progress':
         return 'Trip in progress';
       case 'completed':
         return 'Trip completed';
       case 'cancelled':
         return 'Trip cancelled';
       default:
-        return 'Processing...';
+        return 'Processing trip...';
     }
   };
 
   const getStatusColor = () => {
     switch (ride.status) {
-      case 'active':
+      case 'requested':
+        return Colors.warning;
+      case 'driver_assigned':
+      case 'driver_arriving':
+      case 'driver_arrived':
+        return Colors.info;
+      case 'in_progress':
         return Colors.success;
       case 'completed':
         return Colors.success;
@@ -77,7 +127,13 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
 
   const getStatusGradient = () => {
     switch (ride.status) {
-      case 'active':
+      case 'requested':
+        return ['#F59E0B', '#D97706'] as const;
+      case 'driver_assigned':
+      case 'driver_arriving':
+      case 'driver_arrived':
+        return ['#3B82F6', '#2563EB'] as const;
+      case 'in_progress':
         return ['#10B981', '#059669'] as const;
       case 'completed':
         return ['#10B981', '#059669'] as const;
@@ -91,15 +147,12 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
   return (
     <View style={styles.container}>
       {/* Live Map View */}
-      {ride.status === 'active' && (
+      {['driver_arriving', 'driver_arrived', 'in_progress'].includes(ride.status) && (
         <View style={styles.mapSection}>
           <MapView
-            currentLocation={currentLocation || undefined}
-            destination={{
-              latitude: 37.7849, // Mock destination coordinates
-              longitude: -122.4094
-            }}
-            driverLocation={driverLocation || undefined}
+            currentLocation={currentLocation}
+            destination={destination}
+            driverLocation={driverLocation}
             showRoute={true}
             showNearbyDrivers={false}
           />
@@ -132,7 +185,7 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
       </LinearGradient>
 
       {/* Progress Bar for In-Progress Rides */}
-      {ride.status === 'active' && (
+      {ride.status === 'in_progress' && (
         <View style={styles.progressSection}>
           <View style={styles.progressBar}>
             <Animated.View 
@@ -172,6 +225,7 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
             <View style={styles.driverDetails}>
               <Text style={styles.driverName}>John Smith</Text>
               <Text style={styles.licensePlate}>ABC 123 • Toyota Camry</Text>
+              <Text style={styles.driverPhone}>+1 (555) 123-4567</Text>
             </View>
           </View>
           <View style={styles.driverActions}>
@@ -238,6 +292,10 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
             <Text style={styles.fareLabel}>Duration</Text>
             <Text style={styles.fareValue}>{ride.duration || 0} min</Text>
           </View>
+          <View style={styles.fareRow}>
+            <Text style={styles.fareLabel}>Ride Type</Text>
+            <Text style={styles.fareValue}>{ride.ride_type || 'Economy'}</Text>
+          </View>
           <TouchableOpacity style={styles.fareDetailsButton}>
             <Text style={styles.fareDetailsText}>View Receipt</Text>
             <ChevronRight size={16} color={Colors.primary} />
@@ -247,7 +305,7 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
 
       {/* Action Buttons */}
       <View style={styles.actionSection}>
-        {ride.status === 'active' && (
+        {['requested', 'driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'].includes(ride.status) && (
           <TouchableOpacity 
             style={styles.cancelButton} 
             onPress={onCancel}
@@ -480,6 +538,11 @@ const styles = StyleSheet.create({
   licensePlate: {
     fontSize: 13,
     color: Colors.textSecondary,
+  },
+  driverPhone: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
   driverActions: {
     flexDirection: 'row',
