@@ -24,14 +24,14 @@ export interface RideRequest {
 export class RideService {
   // Get nearby drivers within a certain radius (in km)
   async getNearbyDrivers(latitude: number, longitude: number, radius: number = 5): Promise<Driver[]> {
-    const result = await driversTable()
+    const { data, error } = await driversTable()
       .select('*')
       .eq('status', 'available')
-      .execute();
+      ;
 
-    if (!result.data) return [];
+    if (error || !data) return [];
 
-    return result.data.filter((driver) => {
+    return data.filter((driver) => {
       if (!driver.current_location) return false;
       const distance = this.calculateDistance(
         latitude,
@@ -105,16 +105,16 @@ export class RideService {
 
   // Find nearby available drivers
   async findNearbyDrivers(pickup: Location, maxDistance: number = 10): Promise<Driver[]> {
-    const result = await driversTable()
+    const { data, error } = await driversTable()
       .select('*')
       .eq('status', 'active')
       .eq('documents_verified', true)
-      .execute();
+      ;
 
-    if (result.error || !result.data) return [];
+    if (error || !data) return [];
 
     // Filter by distance and sort
-    return result.data
+    return data
       .filter((driver: Driver) => {
         if (!driver.vehicle_type) return false;
         // In a real app, you'd have driver location data
