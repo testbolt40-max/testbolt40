@@ -56,7 +56,15 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Login Failed', error.message);
+      if (error.message.includes('Email not confirmed')) {
+        Alert.alert(
+          'Email Not Confirmed',
+          'Please check your email and click the confirmation link before signing in.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Login Failed', error.message);
+      }
     } else {
       // Don't manually redirect here - let the _layout.tsx handle routing based on user type
       console.log('Login successful, letting _layout handle routing');
