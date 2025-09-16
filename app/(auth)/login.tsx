@@ -90,7 +90,6 @@ export default function LoginScreen() {
   const handleTestLogin = (testEmail: string, testPassword: string, testUserType: UserType) => {
     setEmail(testEmail);
     setPassword(testPassword);
-    setSelectedUserType(testUserType);
     setTimeout(() => handleLogin(), 100);
   };
 

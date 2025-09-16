@@ -68,24 +68,7 @@ export function useAuth() {
       password,
     });
     
-    // Update user metadata with selected user type if provided
-    if (data.user && userType) {
-      console.log('Updating user type to:', userType);
-      
-      // Update user metadata
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          ...data.user.user_metadata,
-          user_type: userType,
-        }
-      });
-      
-      if (updateError) {
-        console.error('Error updating user type:', updateError);
-      } else {
-        setUserType(userType);
-      }
-    } else if (data.user) {
+    if (data.user) {
       // Use existing user type or default to passenger
       const existingUserType = data.user.user_metadata?.user_type as UserType;
       setUserType(existingUserType || 'passenger');
