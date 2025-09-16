@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Car, Clock, MapPin, Star, Phone, MessageCircle, X, Calendar, Filter } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import RatingModal from '@/components/RatingModal';
 import RideTracker from '@/components/RideTracker';
 import { useRides } from '@/hooks/useRides';
@@ -29,76 +30,16 @@ export default function BookingsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [loading, setLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const { cancelRide, loadRides } = useRides();
 
   useEffect(() => {
     const loadUserRides = async () => {
       if (user && !authLoading) {
+        setLoading(true);
         try {
-          // Load rides directly from database
-          const { data: userRides, error } = await supabase
-            .from('rides')
-            .select('*')
-            .eq('passenger_id', user.id)
-            .order('created_at', { ascending: false });
-          
-          if (error) {
-            console.error('Error loading rides:', error);
-            // Set mock data for demo
-            const mockRides = [
-              {
-                id: 'mock-1',
-                passenger_id: user.id,
-                driver_id: null,
-                pickup_location: 'Downtown San Francisco',
-                dropoff_location: 'San Francisco Airport',
-                status: 'completed' as const,
-                fare: 28.50,
-                distance: 15.2,
-                duration: 25,
-                eta: null,
-                created_at: new Date().toISOString(),
-                completed_at: new Date().toISOString(),
-                cancelled_at: null,
-                pickup_coordinates: null,
-                dropoff_coordinates: null,
-                ride_type: 'economy',
-                passengers_count: 1
-              },
-              {
-                id: 'mock-2',
-                passenger_id: user.id,
-                driver_id: null,
-                pickup_location: 'Union Square',
-                dropoff_location: 'Golden Gate Bridge',
-                status: 'completed' as const,
-                fare: 22.75,
-                distance: 8.5,
-                duration: 18,
-                eta: null,
-                created_at: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-                completed_at: new Date(Date.now() - 86400000).toISOString(),
-                cancelled_at: null,
-                pickup_coordinates: null,
-                dropoff_coordinates: null,
-                ride_type: 'comfort',
-                passengers_count: 2
-              }
-            ];
-            setRides(mockRides);
-            setActiveRide(null);
-          } else {
-            setRides(userRides || []);
-            // Find active ride
-            const active = userRides?.find(ride => 
-              ['requested', 'driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'].includes(ride.status)
-            );
-            setActiveRide(active || null);
-          }
-        } catch (error) {
-          console.error('Error loading rides:', error);
-          // Set mock data if loading fails
+          // Set mock data for demo - always show sample trips
           const mockRides = [
             {
               id: 'mock-1',
@@ -118,10 +59,59 @@ export default function BookingsScreen() {
               dropoff_coordinates: null,
               ride_type: 'economy',
               passengers_count: 1
+            },
+            {
+              id: 'mock-2',
+              passenger_id: user.id,
+              driver_id: null,
+              pickup_location: 'Union Square',
+              dropoff_location: 'Golden Gate Bridge',
+              status: 'completed' as const,
+              fare: 22.75,
+              distance: 8.5,
+              duration: 18,
+              eta: null,
+              created_at: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+              completed_at: new Date(Date.now() - 86400000).toISOString(),
+              cancelled_at: null,
+              pickup_coordinates: null,
+              dropoff_coordinates: null,
+              ride_type: 'comfort',
+              passengers_count: 2
+            },
+            {
+              id: 'mock-3',
+              passenger_id: user.id,
+              driver_id: 'driver-1',
+              pickup_location: 'Current Location',
+              dropoff_location: 'Shopping Mall',
+              status: 'in_progress' as const,
+              fare: 15.25,
+              distance: 5.8,
+              duration: 12,
+              eta: '8 min',
+              created_at: new Date().toISOString(),
+              completed_at: null,
+              cancelled_at: null,
+              pickup_coordinates: null,
+              dropoff_coordinates: null,
+              ride_type: 'economy',
+              passengers_count: 1
             }
           ];
           setRides(mockRides);
+          
+          // Find active ride
+          const active = mockRides.find(ride => 
+            ['requested', 'driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'].includes(ride.status)
+          );
+          setActiveRide(active || null);
+        } catch (error) {
+          console.error('Error loading rides:', error);
+          setRides([]);
           setActiveRide(null);
+        } finally {
+          setLoading(false);
         }
       }
     };
@@ -263,6 +253,20 @@ export default function BookingsScreen() {
   };
 
   if (authLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <View style={styles.header}>
+          <Text style={styles.title}>Your Trips</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading your trips...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
