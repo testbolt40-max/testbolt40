@@ -11,13 +11,14 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Car, Clock, MapPin, Star, Phone, MessageCircle, X, Calendar, Filter } from 'lucide-react-native';
+import { Car, Clock, MapPin, Star, Phone, MessageCircle, X, Calendar, Filter, Map } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import RatingModal from '@/components/RatingModal';
 import RideTracker from '@/components/RideTracker';
 import { useRides } from '@/hooks/useRides';
 import { Database } from '@/types/database';
+import MapView from '@/components/MapView';
 
 type Ride = Database['public']['Tables']['rides']['Row'];
 
@@ -28,6 +29,7 @@ export default function BookingsScreen() {
   const [showDetails, setShowDetails] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [fadeAnim] = useState(new Animated.Value(0));
   const [loading, setLoading] = useState(true);
@@ -186,6 +188,11 @@ export default function BookingsScreen() {
   const handleTrackRide = (ride: Ride) => {
     setSelectedRide(ride);
     setShowTrackingModal(true);
+  };
+
+  const handleShowMap = (ride: Ride) => {
+    setSelectedRide(ride);
+    setShowMapModal(true);
   };
 
   const handleCancelRide = async (ride: Ride) => {
@@ -391,6 +398,13 @@ export default function BookingsScreen() {
                       <Text style={styles.actionButtonText}>Track</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
+                      style={[styles.actionButton, styles.mapActionButton]}
+                      onPress={() => handleShowMap(ride)}
+                    >
+                      <Map size={14} color="#FFFFFF" />
+                      <Text style={styles.actionButtonText}>Map</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
                       style={[styles.actionButton, styles.secondaryActionButton]}
                       onPress={() => {
                         console.log('Cancel button pressed for ride:', ride.id);
@@ -480,6 +494,13 @@ export default function BookingsScreen() {
                         <Text style={styles.actionButtonText}>Rate</Text>
                       </TouchableOpacity>
                       <TouchableOpacity 
+                        style={[styles.actionButton, styles.mapActionButton]}
+                        onPress={() => handleShowMap(ride)}
+                      >
+                        <Map size={14} color="#FFFFFF" />
+                        <Text style={styles.actionButtonText}>Map</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
                         style={[styles.actionButton, styles.secondaryActionButton]}
                         onPress={() => handleRepeatRide(ride)}
                       >
@@ -549,6 +570,80 @@ export default function BookingsScreen() {
                 );
               }}
             />
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Map Modal */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowMapModal(false)}
+            >
+              <X size={24} color="#374151" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Trip Route</Text>
+            <View style={styles.placeholder} />
+          </View>
+          
+          {selectedRide && (
+            <View style={styles.mapModalContent}>
+              {/* Trip Info Header */}
+              <View style={styles.tripInfoHeader}>
+                <View style={styles.tripRoute}>
+                  <View style={styles.routeItem}>
+                    <View style={[styles.routeDot, { backgroundColor: '#10B981' }]} />
+                    <Text style={styles.routeText}>{selectedRide.pickup_location}</Text>
+                  </View>
+                  <View style={styles.routeLine} />
+                  <View style={styles.routeItem}>
+                    <View style={[styles.routeDot, { backgroundColor: '#DC2626' }]} />
+                    <Text style={styles.routeText}>{selectedRide.dropoff_location}</Text>
+                  </View>
+                </View>
+                <View style={styles.tripMetrics}>
+                  <Text style={styles.metricText}>{(selectedRide.distance || 0).toFixed(1)} km</Text>
+                  <Text style={styles.metricText}>{selectedRide.duration || 0} min</Text>
+                  <Text style={styles.fareText}>${(selectedRide.fare || 0).toFixed(2)}</Text>
+                </View>
+              </View>
+              
+              {/* Map View */}
+              <View style={styles.mapContainer}>
+                <MapView
+                  currentLocation={{
+                    latitude: 37.7749,
+                    longitude: -122.4194
+                  }}
+                  destination={{
+                    latitude: 37.7949,
+                    longitude: -122.3994
+                  }}
+                  driverLocation={selectedRide.status === 'in_progress' ? {
+                    latitude: 37.7849,
+                    longitude: -122.4094
+                  } : undefined}
+                  showRoute={true}
+                  showNearbyDrivers={false}
+                />
+              </View>
+              
+              {/* Trip Status */}
+              <View style={styles.tripStatusFooter}>
+                <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(selectedRide.status) }]}>
+                  <Text style={styles.statusIndicatorText}>{getStatusText(selectedRide.status)}</Text>
+                </View>
+                <Text style={styles.tripDate}>
+                  {formatDate(selectedRide.created_at!)}, {formatTime(selectedRide.created_at!)}
+                </Text>
+              </View>
+            </View>
           )}
         </SafeAreaView>
       </Modal>
@@ -792,7 +887,7 @@ const styles = StyleSheet.create({
   rideActions: {
     flexDirection: 'row',
     marginTop: 12,
-    gap: 8,
+    gap: 6,
   },
   actionButton: {
     flex: 1,
@@ -803,6 +898,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
+  },
+  mapActionButton: {
+    backgroundColor: '#3B82F6',
   },
   secondaryActionButton: {
     backgroundColor: '#F3F4F6',
@@ -843,5 +941,60 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  mapModalContent: {
+    flex: 1,
+  },
+  tripInfoHeader: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  tripRoute: {
+    marginBottom: 12,
+  },
+  tripMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  metricText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  fareText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  tripStatusFooter: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tripDate: {
+    fontSize: 12,
+    color: '#6B7280',
   },
 });
