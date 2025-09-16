@@ -40,8 +40,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "EXPO_PUBLIC_SUPABASE_URL": "https://your-project-url.supabase.co",
-      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "your-anon-key",
+      "EXPO_PUBLIC_SUPABASE_URL": "https://emisrbgcisithueunelm.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtaXNyYmdjaXNpdGh1ZXVuZWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjYyNDI2NzEsImV4cCI6MjA0MTgxODY3MX0.VZaX8wFHKhbQx0mLYJQxWLvQf5R3KqGZJ3QqJ5QqJ5Q",
       "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_your_stripe_publishable_key_here",
       "EXPO_PUBLIC_API_URL": "https://your-api-url.com"
     }
